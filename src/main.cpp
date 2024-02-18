@@ -12,9 +12,12 @@ CRGB leds[NUM_LEDS];
 static const int16_t ROWS = 16;
 static const int16_t COLS = 16;
 
-int16_t inputWidth = 2;
+int16_t inputWidth = 1;
 int16_t inputX = 7;
-int16_t inputY = 2;
+int16_t inputY = 0;
+
+unsigned long lastMillis;
+unsigned long maxFps = 2;
 
 int16_t BACKGROUND_COLOR = COLOR_BLACK;
 
@@ -44,7 +47,7 @@ static const int16_t GRID_STATE_NEW = 1;
 static const int16_t GRID_STATE_FALLING = 2;
 static const int16_t GRID_STATE_COMPLETE = 3;
 
-int16_t frameRateCap = 30;
+int16_t maxFramesPerSecond = 2;
 
 bool withinCols(int16_t value)
 {
@@ -238,12 +241,11 @@ void setup()
   }
 
   Serial.println("Init FastLED....");
-  FastLED.setMaxRefreshRate(frameRateCap);
   FastLED.addLeds<NEOPIXEL, LED_DATA_PIN>(leds, NUM_LEDS);
 
   colorChangeTime = millis() + 1000;
 
-  delay(2000);
+  lastMillis = millis();
 }
 
 // #error  "Error! Please make sure <User_Setups/Setup206_LilyGo_T_Display_S3.h> is selected in <TFT_eSPI/User_Setup_Select.h>"
@@ -253,15 +255,18 @@ void setup()
 
 void loop()
 {
-  Serial.println("Looping...");
+  //Serial.println("Looping...");
 
-  // Get frame rate.
-  Serial.println("FastLED.getFPS()...");
-  uint16_t fastLedFps = FastLED.getFPS();
+  unsigned long currentMillis = millis();
+  unsigned long diffMillis = currentMillis - lastMillis;
 
-  // Get frame rate.
-  Serial.printf("FastLED FPS: %hu", fastLedFps);
-  Serial.println();
+  if ((1000 / maxFps) > diffMillis)
+  {
+    return;
+  }
+
+  lastMillis = currentMillis;
+  Serial.println("Continuing loop...");
 
   // Randomly add an area of pixels
   int16_t halfInputWidth = inputWidth / 2;
