@@ -261,11 +261,11 @@ void setColor(CRGB *crgb, int8_t _red, int8_t _green, int8_t _blue)
 
 void setup()
 {
-  Serial.begin(115200);
-  Serial.println("Hello, starting...");
+  //Serial.begin(115200);
+  //Serial.println("Hello, starting...");
 
   // Init 2-d array/grid to point to leds contiguous memory allocation.
-  Serial.println("Init 2-d array/grid to point to leds contiguous memory allocation....");
+  //Serial.println("Init 2-d array/grid to point to leds contiguous memory allocation....");
   grid = new CRGB *[ROWS];
   for (int16_t i = 0; i < ROWS; ++i)
   {
@@ -273,7 +273,7 @@ void setup()
   }
 
   // Init other 2-d arrays, holding pixel state/velocity
-  Serial.println("Init other 2-d arrays, holding pixel state/velocity....");
+  //Serial.println("Init other 2-d arrays, holding pixel state/velocity....");
   velocityGrid = new int16_t *[ROWS];
   nextVelocityGrid = new int16_t *[ROWS];
   lastVelocityGrid = new int16_t *[ROWS];
@@ -283,7 +283,7 @@ void setup()
   lastStateGrid = new int16_t *[ROWS];
 
   // Initial values
-  Serial.println("Initial values....");
+  //Serial.println("Initial values....");
   for (int16_t i = 0; i < ROWS; ++i)
   {
     velocityGrid[i] = new int16_t[COLS];
@@ -309,7 +309,7 @@ void setup()
     }
   }
 
-  Serial.println("Init FastLED....");
+  //Serial.println("Init FastLED....");
   FastLED.addLeds<NEOPIXEL, LED_DATA_PIN>(leds, NUM_LEDS);
 
   colorChangeTime = millis() + 1000;
@@ -335,7 +335,7 @@ void loop()
   }
 
   lastMillis = currentMillis;
-  Serial.println("Continuing loop...");
+  //Serial.println("Continuing loop...");
 
   // Randomly add an area of pixels
   int16_t halfInputWidth = inputWidth / 2;
