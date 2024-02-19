@@ -344,6 +344,20 @@ void loop()
   lastMillis = currentMillis;
   // Serial.println("Continuing loop...");
 
+  // Change the color of the pixels over time
+  if (colorChangeTime < millis())
+  {
+    colorChangeTime = millis() + millisToChangeColor;
+    setNextColor();
+  }
+
+  // Change the inputX of the pixels over time or if the current input is already filled.
+  if (inputXChangeTime < millis() || stateGrid[inputY][inputX] != GRID_STATE_NONE)
+  {
+    inputXChangeTime = millis() + millisToChangeInputX;
+    inputX = random(0, COLS - 1);
+  }
+
   // Randomly add an area of pixels
   int16_t halfInputWidth = inputWidth / 2;
   for (int16_t i = -halfInputWidth; i <= halfInputWidth; ++i)
@@ -372,20 +386,6 @@ void loop()
         }
       }
     }
-  }
-
-  // Change the color of the pixels over time
-  if (colorChangeTime < millis())
-  {
-    colorChangeTime = millis() + millisToChangeColor;
-    setNextColor();
-  }
-
-  // Change the inputX of the pixels over time or if the current input is already filled.
-  if (inputXChangeTime < millis())
-  {
-    inputXChangeTime = millis() + millisToChangeInputX;
-    inputX = random(0, COLS - 1);
   }
 
   // // DEBUG
