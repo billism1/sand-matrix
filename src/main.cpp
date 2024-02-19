@@ -24,7 +24,7 @@ unsigned long maxFps = 20;
 unsigned long colorChangeTime = 0;
 int16_t millisToChangeColor = 250;
 unsigned long inputXChangeTime = 0;
-int16_t millisToChangeInputX = 10000;
+int16_t millisToChangeInputX = 6000;
 
 int16_t BACKGROUND_COLOR = COLOR_BLACK;
 
@@ -36,7 +36,7 @@ int16_t color = red << 11;
 
 int16_t maxVelocity = 2;
 int16_t gravity = 1;
-int16_t percentInputFill = 10;
+int16_t percentInputFill = 25;
 int16_t adjacentVelocityResetValue = 3;
 
 CRGB **grid;
@@ -367,7 +367,7 @@ void loop()
       if (random(100) < percentInputFill)
       {
         dropCount++;
-        if (dropCount >= (inputWidth * ROWS * COLS))
+        if (dropCount > (inputWidth * ROWS * COLS))
         {
           dropCount = 0;
           resetGrid();
