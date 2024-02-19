@@ -1,7 +1,8 @@
 #include <Arduino.h>
+#include <Math.h>
 #include "FastLED.h"
 
-#define LED_DATA_PIN 2
+#define LED_DATA_PIN 10
 
 #define COLOR_BLACK 0
 
@@ -13,11 +14,15 @@ static const int16_t ROWS = 16;
 static const int16_t COLS = 16;
 
 int16_t inputWidth = 1;
-int16_t inputX = 7;
+int16_t inputX = 4;
 int16_t inputY = 0;
 
 unsigned long lastMillis;
-unsigned long maxFps = 2;
+unsigned long maxFps = 20;
+unsigned long colorChangeTime = 0;
+int16_t millisToChangeColor = 250;
+unsigned long inputXChangeTime = 0;
+int16_t millisToChangeInputX = 8000;
 
 int16_t BACKGROUND_COLOR = COLOR_BLACK;
 
@@ -26,8 +31,8 @@ byte green = 0;
 byte blue = 0;
 byte colorState = 0;
 int16_t color = red << 11;
-unsigned long colorChangeTime = 0;
 
+int16_t maxVelocity = 2;
 int16_t gravity = 1;
 int16_t percentInputFill = 10;
 int16_t adjacentVelocityResetValue = 3;
@@ -48,6 +53,73 @@ static const int16_t GRID_STATE_FALLING = 2;
 static const int16_t GRID_STATE_COMPLETE = 3;
 
 int16_t maxFramesPerSecond = 2;
+
+// Params for width and height
+const uint8_t kMatrixWidth = COLS;
+const uint8_t kMatrixHeight = ROWS;
+
+// Param for different pixel layouts
+const bool kMatrixSerpentineLayout = true;
+const bool kMatrixVertical = false;
+
+// XY function from:
+// https://github.com/FastLED/FastLED/blob/master/examples/XYMatrix/XYMatrix.ino
+uint16_t XY(uint8_t x, uint8_t y)
+{
+  uint16_t i;
+
+  if (kMatrixSerpentineLayout == false)
+  {
+    if (kMatrixVertical == false)
+    {
+      i = (y * kMatrixWidth) + x;
+    }
+    else
+    {
+      i = kMatrixHeight * (kMatrixWidth - (x + 1)) + y;
+    }
+  }
+
+  if (kMatrixSerpentineLayout == true)
+  {
+    if (kMatrixVertical == false)
+    {
+      if (y & 0x01)
+      {
+        // Odd rows run backwards
+        uint8_t reverseX = (kMatrixWidth - 1) - x;
+        i = (y * kMatrixWidth) + reverseX;
+      }
+      else
+      {
+        // Even rows run forwards
+        i = (y * kMatrixWidth) + x;
+      }
+    }
+    else
+    { // vertical positioning
+      if (x & 0x01)
+      {
+        i = kMatrixHeight * (kMatrixWidth - (x + 1)) + y;
+      }
+      else
+      {
+        i = kMatrixHeight * (kMatrixWidth - x) - (y + 1);
+      }
+    }
+  }
+
+  return i;
+}
+
+uint16_t XYsafe(uint8_t x, uint8_t y)
+{
+  if (x >= kMatrixWidth)
+    return -1;
+  if (y >= kMatrixHeight)
+    return -1;
+  return XY(x, y);
+}
 
 bool withinCols(int16_t value)
 {
@@ -189,12 +261,8 @@ void setColor(CRGB *crgb, int8_t _red, int8_t _green, int8_t _blue)
 
 void setup()
 {
-  delay(5000);
-
   Serial.begin(115200);
   Serial.println("Hello, starting...");
-
-  delay(1000);
 
   // Init 2-d array/grid to point to leds contiguous memory allocation.
   Serial.println("Init 2-d array/grid to point to leds contiguous memory allocation....");
@@ -228,7 +296,8 @@ void setup()
 
     for (int16_t j = 0; j < COLS; ++j)
     {
-      setColor(&grid[i][j], 0, 0, 0);
+      // setColor(&grid[i][j], 0, 0, 0);
+      setColor(&leds[XY(j, i)], 0, 0, 0);
 
       velocityGrid[i][j] = 0;
       nextVelocityGrid[i][j] = 0;
@@ -255,7 +324,7 @@ void setup()
 
 void loop()
 {
-  //Serial.println("Looping...");
+  // Serial.println("Looping...");
 
   unsigned long currentMillis = millis();
   unsigned long diffMillis = currentMillis - lastMillis;
@@ -282,7 +351,8 @@ void loop()
         if (withinCols(col) && withinRows(row) &&
             (stateGrid[row][col] == GRID_STATE_NONE || stateGrid[row][col] == GRID_STATE_COMPLETE))
         {
-          setColor(&grid[row][col], red, green, blue);
+          // setColor(&grid[row][col], red, green, blue);
+          setColor(&leds[XY(col, row)], red, green, blue);
           velocityGrid[row][col] = 1;
           stateGrid[row][col] = GRID_STATE_NEW;
         }
@@ -293,9 +363,30 @@ void loop()
   // Change the color of the pixels over time
   if (colorChangeTime < millis())
   {
-    colorChangeTime = millis() + 750;
+    colorChangeTime = millis() + millisToChangeColor;
     setNextColor();
   }
+
+  // Change the inputX of the pixels over time
+  if (inputXChangeTime < millis())
+  {
+    inputXChangeTime = millis() + millisToChangeInputX;
+    inputX = random(0, COLS - 1);
+  }
+
+  // // DEBUG
+  // // DEBUG
+  // Serial.println("Array Values:");
+  // for (int16_t i = 0; i < ROWS; ++i)
+  // {
+  //   for (int16_t j = 0; j < COLS; ++j)
+  //   {
+  //     Serial.printf("|%02hhX%02hhX%02hhX|", grid[i][j].red, grid[i][j].green, grid[i][j].blue);
+  //   }
+  //   Serial.println("");
+  // }
+  // // DEBUG
+  // // DEBUG
 
   // Draw the pixels
   FastLED.show();
@@ -322,7 +413,8 @@ void loop()
       // Tread lightly in here, and check as few pixels as needed.
 
       // Get the state of the current pixel.
-      CRGB pixelColor = grid[i][j];
+      // CRGB pixelColor = grid[i][j];
+      CRGB pixelColor = leds[XY(j, i)];
       int16_t pixelVelocity = velocityGrid[i][j];
       int16_t pixelState = stateGrid[i][j];
 
@@ -333,7 +425,7 @@ void loop()
       {
         // pixelsChecked++;
 
-        int16_t newPos = int16_t(i + pixelVelocity);
+        int16_t newPos = int16_t(i + min(maxVelocity, pixelVelocity));
         for (int16_t y = newPos; y > i; y--)
         {
           if (!withinRows(y))
@@ -369,7 +461,8 @@ void loop()
           if (belowState == GRID_STATE_NONE && belowNextState == GRID_STATE_NONE)
           {
             // This pixel will go straight down.
-            grid[y][j] = pixelColor;
+            // grid[y][j] = pixelColor;
+            leds[XY(j, y)] = pixelColor;
             nextVelocityGrid[y][j] = pixelVelocity + gravity;
             nextStateGrid[y][j] = GRID_STATE_FALLING;
             moved = true;
@@ -378,7 +471,8 @@ void loop()
           else if (belowStateA == GRID_STATE_NONE && belowNextStateA == GRID_STATE_NONE)
           {
             // This pixel will fall to side A (right)
-            grid[y][j + direction] = pixelColor;
+            // grid[y][j + direction] = pixelColor;
+            leds[XY(j + direction, y)] = pixelColor;
             nextVelocityGrid[y][j + direction] = pixelVelocity + gravity;
             nextStateGrid[y][j + direction] = GRID_STATE_FALLING;
             moved = true;
@@ -387,7 +481,8 @@ void loop()
           else if (belowStateB == GRID_STATE_NONE && belowNextStateB == GRID_STATE_NONE)
           {
             // This pixel will fall to side B (left)
-            grid[y][j - direction] = pixelColor;
+            // grid[y][j - direction] = pixelColor;
+            leds[XY(j - direction, y)] = pixelColor;
             nextVelocityGrid[y][j - direction] = pixelVelocity + gravity;
             nextStateGrid[y][j - direction] = GRID_STATE_FALLING;
             moved = true;
@@ -399,7 +494,8 @@ void loop()
       if (moved)
       {
         // Reset color where this pixel was.
-        setColor(&grid[i][j], 0, 0, 0);
+        // setColor(&grid[i][j], 0, 0, 0);
+        setColor(&leds[XY(j, i)], 0, 0, 0);
 
         resetAdjacentPixels(j, i);
       }
