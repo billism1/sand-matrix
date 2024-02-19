@@ -17,12 +17,14 @@ int16_t inputWidth = 1;
 int16_t inputX = 4;
 int16_t inputY = 0;
 
+int16_t dropCount = 0;
+
 unsigned long lastMillis;
 unsigned long maxFps = 20;
 unsigned long colorChangeTime = 0;
 int16_t millisToChangeColor = 250;
 unsigned long inputXChangeTime = 0;
-int16_t millisToChangeInputX = 8000;
+int16_t millisToChangeInputX = 10000;
 
 int16_t BACKGROUND_COLOR = COLOR_BLACK;
 
@@ -259,31 +261,9 @@ void setColor(CRGB *crgb, int8_t _red, int8_t _green, int8_t _blue)
   crgb->raw[2] = _blue;  /// * `raw[2]` is the blue value
 }
 
-void setup()
+void resetGrid()
 {
-  //Serial.begin(115200);
-  //Serial.println("Hello, starting...");
-
-  // Init 2-d array/grid to point to leds contiguous memory allocation.
-  //Serial.println("Init 2-d array/grid to point to leds contiguous memory allocation....");
-  grid = new CRGB *[ROWS];
-  for (int16_t i = 0; i < ROWS; ++i)
-  {
-    grid[i] = (CRGB *)&leds[COLS * i];
-  }
-
-  // Init other 2-d arrays, holding pixel state/velocity
-  //Serial.println("Init other 2-d arrays, holding pixel state/velocity....");
-  velocityGrid = new int16_t *[ROWS];
-  nextVelocityGrid = new int16_t *[ROWS];
-  lastVelocityGrid = new int16_t *[ROWS];
-
-  stateGrid = new int16_t *[ROWS];
-  nextStateGrid = new int16_t *[ROWS];
-  lastStateGrid = new int16_t *[ROWS];
-
-  // Initial values
-  //Serial.println("Initial values....");
+  // Serial.println("Initial values....");
   for (int16_t i = 0; i < ROWS; ++i)
   {
     velocityGrid[i] = new int16_t[COLS];
@@ -308,8 +288,35 @@ void setup()
       lastStateGrid[i][j] = GRID_STATE_NONE;
     }
   }
+}
 
-  //Serial.println("Init FastLED....");
+void setup()
+{
+  // Serial.begin(115200);
+  // Serial.println("Hello, starting...");
+
+  // Init 2-d array/grid to point to leds contiguous memory allocation.
+  // Serial.println("Init 2-d array/grid to point to leds contiguous memory allocation....");
+  grid = new CRGB *[ROWS];
+  for (int16_t i = 0; i < ROWS; ++i)
+  {
+    grid[i] = (CRGB *)&leds[COLS * i];
+  }
+
+  // Init other 2-d arrays, holding pixel state/velocity
+  // Serial.println("Init other 2-d arrays, holding pixel state/velocity....");
+  velocityGrid = new int16_t *[ROWS];
+  nextVelocityGrid = new int16_t *[ROWS];
+  lastVelocityGrid = new int16_t *[ROWS];
+
+  stateGrid = new int16_t *[ROWS];
+  nextStateGrid = new int16_t *[ROWS];
+  lastStateGrid = new int16_t *[ROWS];
+
+  // Initial values
+  resetGrid();
+
+  // Serial.println("Init FastLED....");
   FastLED.addLeds<NEOPIXEL, LED_DATA_PIN>(leds, NUM_LEDS);
 
   colorChangeTime = millis() + 1000;
@@ -335,7 +342,7 @@ void loop()
   }
 
   lastMillis = currentMillis;
-  //Serial.println("Continuing loop...");
+  // Serial.println("Continuing loop...");
 
   // Randomly add an area of pixels
   int16_t halfInputWidth = inputWidth / 2;
@@ -345,6 +352,13 @@ void loop()
     {
       if (random(100) < percentInputFill)
       {
+        dropCount++;
+        if (dropCount >= (inputWidth * ROWS * COLS))
+        {
+          dropCount = 0;
+          resetGrid();
+        }
+
         int16_t col = inputX + i;
         int16_t row = inputY + j;
 
@@ -367,7 +381,7 @@ void loop()
     setNextColor();
   }
 
-  // Change the inputX of the pixels over time
+  // Change the inputX of the pixels over time or if the current input is already filled.
   if (inputXChangeTime < millis())
   {
     inputXChangeTime = millis() + millisToChangeInputX;
