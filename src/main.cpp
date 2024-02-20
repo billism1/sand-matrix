@@ -3,6 +3,37 @@
 #include "FastLED.h"
 #include "colorChangeRoutine.h"
 
+//////////////////////////////////////////
+// Parameters you can play with:
+
+int16_t millisToChangeColor = 250;
+int16_t millisToChangeAllColors = 150;
+int16_t millisToChangeInputX = 6000;
+
+int16_t inputWidth = 1;
+int16_t inputX = 4;
+int16_t inputY = 0;
+
+unsigned long maxFps = 20;
+
+int16_t maxVelocity = 2;
+int16_t gravity = 1;
+int16_t percentInputFill = 25;
+int16_t adjacentVelocityResetValue = 3;
+
+// End parameters you can play with
+//////////////////////////////////////////
+
+//////////////////////////////////////////
+// Display size parameters:
+
+#define NUM_LEDS 256
+static const int16_t ROWS = 16;
+static const int16_t COLS = 16;
+
+// Display size parameters
+//////////////////////////////////////////
+
 struct GridState
 {
   uint16_t state;
@@ -11,30 +42,17 @@ struct GridState
 };
 
 #define LED_DATA_PIN 10
-
 #define COLOR_BLACK 0
 
-#define NUM_LEDS 256
-
 CRGB leds[NUM_LEDS];
-
-static const int16_t ROWS = 16;
-static const int16_t COLS = 16;
-
-int16_t inputWidth = 1;
-int16_t inputX = 4;
-int16_t inputY = 0;
 
 int16_t dropCount = 0;
 
 unsigned long lastMillis;
-unsigned long maxFps = 20;
 unsigned long colorChangeTime = 0;
 unsigned long allColorChangeTime = 0;
-int16_t millisToChangeColor = 250;
-int16_t millisToChangeAllColors = 150;
+
 unsigned long inputXChangeTime = 0;
-int16_t millisToChangeInputX = 6000;
 
 int16_t BACKGROUND_COLOR = COLOR_BLACK;
 
@@ -42,15 +60,8 @@ byte rgbValues[] = {0x31, 0x00, 0x00}; // red, green, blue
 #define COLORS_ARRAY_RED rgbValues[0]
 #define COLORS_ARRAY_GREEN rgbValues[1]
 #define COLORS_ARRAY_BLUE rgbValues[2]
-// byte red = 31;
-// byte green = 0;
-// byte blue = 0;
-uint16_t newKValue = 0;
 
-int16_t maxVelocity = 2;
-int16_t gravity = 1;
-int16_t percentInputFill = 25;
-int16_t adjacentVelocityResetValue = 3;
+uint16_t newKValue = 0;
 
 GridState **stateGrid;
 GridState **nextStateGrid;
@@ -60,8 +71,6 @@ static const uint16_t GRID_STATE_NONE = 0;
 static const uint16_t GRID_STATE_NEW = 1;
 static const uint16_t GRID_STATE_FALLING = 2;
 static const uint16_t GRID_STATE_COMPLETE = 3;
-
-int16_t maxFramesPerSecond = 2;
 
 // Params for width and height
 const uint8_t kMatrixWidth = COLS;
