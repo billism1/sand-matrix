@@ -1,8 +1,8 @@
 #include <Arduino.h>
 
+// Arrays for sine fade technique array color cycling, as seen from:
 // https://arduino.stackexchange.com/questions/35734/better-cycling-through-the-rgb-colors
 
-// sine fade technique array
 const uint8_t sins1[360] = {
     127, 129, 131, 134, 136, 138, 140, 143, 145, 147, 149, 151, 154, 156, 158, 160, 162, 164, 166, 169, 171, 173, 175, 177, 179, 181, 183, 185, 187, 189, 191, 193, 195, 196, 198, 200,
     202, 204, 205, 207, 209, 211, 212, 214, 216, 217, 219, 220, 222, 223, 225, 226, 227, 229, 230, 231, 233, 234, 235, 236, 237, 239, 240, 241, 242, 243, 243, 244, 245, 246, 247, 248,
@@ -28,18 +28,74 @@ const uint8_t sins2[360] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-void setNextColor_sin1(byte *_rgbValues, uint16_t &kValue)
+void setNextColor_sin1(byte *rgbValues, uint16_t &kValue)
 {
-    _rgbValues[0] = sins1[kValue];
-    _rgbValues[1] = sins1[(kValue + 120) % 360];
-    _rgbValues[2] = sins1[(kValue + 240) % 360];
+    rgbValues[0] = sins1[kValue];
+    rgbValues[1] = sins1[(kValue + 120) % 360];
+    rgbValues[2] = sins1[(kValue + 240) % 360];
     kValue++;
 }
 
-void setNextColor_sin2(byte *_rgbValues, uint16_t &kValue)
+void setNextColor_sin2(byte *rgbValues, uint16_t &kValue)
 {
-    _rgbValues[0] = sins2[(kValue + 120) % 360];
-    _rgbValues[1] = sins2[kValue];
-    _rgbValues[2] = sins2[(kValue + 240) % 360];
+    rgbValues[0] = sins2[(kValue + 120) % 360];
+    rgbValues[1] = sins2[kValue];
+    rgbValues[2] = sins2[(kValue + 240) % 360];
     kValue++;
+}
+
+// Color changing state machine
+void setNextColor(byte *rgbValues, uint16_t &kValue)
+{
+    switch (kValue)
+    {
+    case 0:
+        rgbValues[1] += 2;
+        if (rgbValues[1] == 64)
+        {
+            rgbValues[1] = 63;
+            kValue = (uint16_t)1;
+        }
+        break;
+    case 1:
+        rgbValues[0]--;
+        if (rgbValues[0] == 255)
+        {
+            rgbValues[0] = 0;
+            kValue = (uint16_t)2;
+        }
+        break;
+    case 2:
+        rgbValues[2]++;
+        if (rgbValues[2] == 32)
+        {
+            rgbValues[2] = 31;
+            kValue = (uint16_t)3;
+        }
+        break;
+    case 3:
+        rgbValues[1] -= 2;
+        if (rgbValues[1] == 255)
+        {
+            rgbValues[1] = 0;
+            kValue = (uint16_t)4;
+        }
+        break;
+    case 4:
+        rgbValues[0]++;
+        if (rgbValues[0] == 32)
+        {
+            rgbValues[0] = 31;
+            kValue = (uint16_t)5;
+        }
+        break;
+    case 5:
+        rgbValues[2]--;
+        if (rgbValues[2] == 255)
+        {
+            rgbValues[2] = 0;
+            kValue = (uint16_t)0;
+        }
+        break;
+    }
 }

@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <Math.h>
 #include "FastLED.h"
-#include "sin_wave_tech.h"
+#include "colorChangeRoutine.h"
 
 struct GridState
 {
@@ -140,62 +140,6 @@ bool withinRows(int16_t value)
   return value >= 0 && value <= ROWS - 1;
 }
 
-// Color changing state machine
-void setNextColor(byte *_rgbValues, uint16_t &kValue)
-{
-  switch (kValue)
-  {
-  case 0:
-    _rgbValues[1] += 2;
-    if (_rgbValues[1] == 64)
-    {
-      _rgbValues[1] = 63;
-      kValue = (uint16_t)1;
-    }
-    break;
-  case 1:
-    _rgbValues[0]--;
-    if (_rgbValues[0] == 255)
-    {
-      _rgbValues[0] = 0;
-      kValue = (uint16_t)2;
-    }
-    break;
-  case 2:
-    _rgbValues[2]++;
-    if (_rgbValues[2] == 32)
-    {
-      _rgbValues[2] = 31;
-      kValue = (uint16_t)3;
-    }
-    break;
-  case 3:
-    _rgbValues[1] -= 2;
-    if (_rgbValues[1] == 255)
-    {
-      _rgbValues[1] = 0;
-      kValue = (uint16_t)4;
-    }
-    break;
-  case 4:
-    _rgbValues[0]++;
-    if (_rgbValues[0] == 32)
-    {
-      _rgbValues[0] = 31;
-      kValue = (uint16_t)5;
-    }
-    break;
-  case 5:
-    _rgbValues[2]--;
-    if (_rgbValues[2] == 255)
-    {
-      _rgbValues[2] = 0;
-      kValue = (uint16_t)0;
-    }
-    break;
-  }
-}
-
 void setNextColorAll()
 {
   for (int16_t i = 0; i < ROWS; ++i)
@@ -304,7 +248,7 @@ void setup()
   // Serial.begin(115200);
   // Serial.println("Hello, starting...");
 
-  // Init other 2-d arrays, holding pixel state
+  // Init 2-d arrays, holding pixel state
   // Serial.println("Init other 2-d arrays, holding pixel state....");
   stateGrid = new GridState *[ROWS];
   nextStateGrid = new GridState *[ROWS];
