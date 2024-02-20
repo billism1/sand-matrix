@@ -14,6 +14,8 @@ int16_t inputWidth = 1;
 int16_t inputX = 4;
 int16_t inputY = 0;
 
+// Maximum frames per second.
+// The high the value, the faster the pixels fall.
 unsigned long maxFps = 20;
 
 int16_t maxVelocity = 2;
