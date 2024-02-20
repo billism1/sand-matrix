@@ -282,10 +282,6 @@ void resetGrid()
   // Serial.println("Initial values....");
   for (int16_t i = 0; i < ROWS; ++i)
   {
-    stateGrid[i] = new GridState[COLS];
-    nextStateGrid[i] = new GridState[COLS];
-    lastStateGrid[i] = new GridState[COLS];
-
     for (int16_t j = 0; j < COLS; ++j)
     {
       setColor(&leds[XY(j, i)], 0, 0, 0);
@@ -313,6 +309,13 @@ void setup()
   stateGrid = new GridState *[ROWS];
   nextStateGrid = new GridState *[ROWS];
   lastStateGrid = new GridState *[ROWS];
+
+  for (int16_t i = 0; i < ROWS; ++i)
+  {
+    stateGrid[i] = new GridState[COLS];
+    nextStateGrid[i] = new GridState[COLS];
+    lastStateGrid[i] = new GridState[COLS];
+  }
 
   // Initial values
   resetGrid();
