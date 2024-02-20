@@ -7,6 +7,7 @@ struct GridState
 {
   uint16_t state;
   uint16_t kValue;
+  int16_t velocity;
 };
 
 #define LED_DATA_PIN 10
@@ -50,12 +51,6 @@ int16_t maxVelocity = 2;
 int16_t gravity = 1;
 int16_t percentInputFill = 25;
 int16_t adjacentVelocityResetValue = 3;
-
-CRGB **grid;
-
-int16_t **velocityGrid;
-int16_t **nextVelocityGrid;
-int16_t **lastVelocityGrid;
 
 GridState **stateGrid;
 GridState **nextStateGrid;
@@ -228,17 +223,17 @@ void resetAdjacentPixels(int16_t x, int16_t y)
     if (nextStateGrid[yMinus][xMinus].state == GRID_STATE_COMPLETE)
     {
       nextStateGrid[yMinus][xMinus].state = GRID_STATE_FALLING;
-      nextVelocityGrid[yMinus][xMinus] = adjacentVelocityResetValue;
+      nextStateGrid[yMinus][xMinus].velocity = adjacentVelocityResetValue;
     }
     if (nextStateGrid[yMinus][x].state == GRID_STATE_COMPLETE)
     {
       nextStateGrid[yMinus][x].state = GRID_STATE_FALLING;
-      nextVelocityGrid[yMinus][x] = adjacentVelocityResetValue;
+      nextStateGrid[yMinus][x].velocity = adjacentVelocityResetValue;
     }
     if (nextStateGrid[yMinus][xPlus].state == GRID_STATE_COMPLETE)
     {
       nextStateGrid[yMinus][xPlus].state = GRID_STATE_FALLING;
-      nextVelocityGrid[yMinus][xPlus] = adjacentVelocityResetValue;
+      nextStateGrid[yMinus][xPlus].velocity = adjacentVelocityResetValue;
     }
   }
 
@@ -246,12 +241,12 @@ void resetAdjacentPixels(int16_t x, int16_t y)
   if (nextStateGrid[y][xMinus].state == GRID_STATE_COMPLETE)
   {
     nextStateGrid[y][xMinus].state = GRID_STATE_FALLING;
-    nextVelocityGrid[y][xMinus] = adjacentVelocityResetValue;
+    nextStateGrid[y][xMinus].velocity = adjacentVelocityResetValue;
   }
   if (nextStateGrid[y][xPlus].state == GRID_STATE_COMPLETE)
   {
     nextStateGrid[y][xPlus].state = GRID_STATE_FALLING;
-    nextVelocityGrid[y][xPlus] = adjacentVelocityResetValue;
+    nextStateGrid[y][xPlus].velocity = adjacentVelocityResetValue;
   }
 
   // Row below
@@ -260,17 +255,17 @@ void resetAdjacentPixels(int16_t x, int16_t y)
     if (nextStateGrid[yPlus][xMinus].state == GRID_STATE_COMPLETE)
     {
       nextStateGrid[yPlus][xMinus].state = GRID_STATE_FALLING;
-      nextVelocityGrid[yPlus][xMinus] = adjacentVelocityResetValue;
+      nextStateGrid[yPlus][xMinus].velocity = adjacentVelocityResetValue;
     }
     if (nextStateGrid[yPlus][x].state == GRID_STATE_COMPLETE)
     {
       nextStateGrid[yPlus][x].state = GRID_STATE_FALLING;
-      nextVelocityGrid[yPlus][x] = adjacentVelocityResetValue;
+      nextStateGrid[yPlus][x].velocity = adjacentVelocityResetValue;
     }
     if (nextStateGrid[yPlus][xPlus].state == GRID_STATE_COMPLETE)
     {
       nextStateGrid[yPlus][xPlus].state = GRID_STATE_FALLING;
-      nextVelocityGrid[yPlus][xPlus] = adjacentVelocityResetValue;
+      nextStateGrid[yPlus][xPlus].velocity = adjacentVelocityResetValue;
     }
   }
 }
@@ -287,28 +282,22 @@ void resetGrid()
   // Serial.println("Initial values....");
   for (int16_t i = 0; i < ROWS; ++i)
   {
-    velocityGrid[i] = new int16_t[COLS];
-    nextVelocityGrid[i] = new int16_t[COLS];
-    lastVelocityGrid[i] = new int16_t[COLS];
-
     stateGrid[i] = new GridState[COLS];
     nextStateGrid[i] = new GridState[COLS];
     lastStateGrid[i] = new GridState[COLS];
 
     for (int16_t j = 0; j < COLS; ++j)
     {
-      // setColor(&grid[i][j], 0, 0, 0);
       setColor(&leds[XY(j, i)], 0, 0, 0);
 
-      velocityGrid[i][j] = 0;
-      nextVelocityGrid[i][j] = 0;
-      lastVelocityGrid[i][j] = 0;
-
       stateGrid[i][j].state = GRID_STATE_NONE;
+      stateGrid[i][j].velocity = 0;
       stateGrid[i][j].kValue = 0;
       nextStateGrid[i][j].state = GRID_STATE_NONE;
+      nextStateGrid[i][j].velocity = 0;
       nextStateGrid[i][j].kValue = 0;
       lastStateGrid[i][j].state = GRID_STATE_NONE;
+      lastStateGrid[i][j].velocity = 0;
       lastStateGrid[i][j].kValue = 0;
     }
   }
@@ -319,20 +308,8 @@ void setup()
   // Serial.begin(115200);
   // Serial.println("Hello, starting...");
 
-  // Init 2-d array/grid to point to leds contiguous memory allocation.
-  // Serial.println("Init 2-d array/grid to point to leds contiguous memory allocation....");
-  grid = new CRGB *[ROWS];
-  for (int16_t i = 0; i < ROWS; ++i)
-  {
-    grid[i] = (CRGB *)&leds[COLS * i];
-  }
-
-  // Init other 2-d arrays, holding pixel state/velocity
-  // Serial.println("Init other 2-d arrays, holding pixel state/velocity....");
-  velocityGrid = new int16_t *[ROWS];
-  nextVelocityGrid = new int16_t *[ROWS];
-  lastVelocityGrid = new int16_t *[ROWS];
-
+  // Init other 2-d arrays, holding pixel state
+  // Serial.println("Init other 2-d arrays, holding pixel state....");
   stateGrid = new GridState *[ROWS];
   nextStateGrid = new GridState *[ROWS];
   lastStateGrid = new GridState *[ROWS];
@@ -405,10 +382,9 @@ void loop()
         if (withinCols(col) && withinRows(row) &&
             (stateGrid[row][col].state == GRID_STATE_NONE || stateGrid[row][col].state == GRID_STATE_COMPLETE))
         {
-          // setColor(&grid[row][col], red, green, blue);
           setColor(&leds[XY(col, row)], COLORS_ARRAY_RED, COLORS_ARRAY_GREEN, COLORS_ARRAY_BLUE);
-          velocityGrid[row][col] = 1;
           stateGrid[row][col].state = GRID_STATE_NEW;
+          stateGrid[row][col].velocity = 1;
           stateGrid[row][col].kValue = newKValue;
         }
       }
@@ -422,7 +398,7 @@ void loop()
   // {
   //   for (int16_t j = 0; j < COLS; ++j)
   //   {
-  //     Serial.printf("|%02hhX%02hhX%02hhX|", grid[i][j].red, grid[i][j].green, grid[i][j].blue);
+  //     Serial.printf("|%02hhX%02hhX%02hhX|", stateGrid[i][j].state, stateGrid[i][j].state, stateGrid[i][j].state);
   //   }
   //   Serial.println("");
   // }
@@ -432,13 +408,13 @@ void loop()
   // Draw the pixels
   FastLED.show();
 
-  // Clear the grids for the next frame of animation
+  // Clear the next state frame of animation
   for (int16_t i = 0; i < ROWS; ++i)
   {
     for (int16_t j = 0; j < COLS; ++j)
     {
-      nextVelocityGrid[i][j] = 0;
       nextStateGrid[i][j].state = GRID_STATE_NONE;
+      nextStateGrid[i][j].velocity = 0;
       nextStateGrid[i][j].kValue = 0;
     }
   }
@@ -455,10 +431,9 @@ void loop()
       // Tread lightly in here, and check as few pixels as needed.
 
       // Get the state of the current pixel.
-      // CRGB pixelColor = grid[i][j];
       CRGB pixelColor = leds[XY(j, i)];
-      int16_t pixelVelocity = velocityGrid[i][j];
       uint16_t pixelState = stateGrid[i][j].state;
+      int16_t pixelVelocity = stateGrid[i][j].velocity;
       uint16_t pixelKValue = stateGrid[i][j].kValue;
 
       bool moved = false;
@@ -504,10 +479,9 @@ void loop()
           if (belowState.state == GRID_STATE_NONE && belowNextState.state == GRID_STATE_NONE)
           {
             // This pixel will go straight down.
-            // grid[y][j] = pixelColor;
             leds[XY(j, y)] = pixelColor;
-            nextVelocityGrid[y][j] = pixelVelocity + gravity;
             nextStateGrid[y][j].state = GRID_STATE_FALLING;
+            nextStateGrid[y][j].velocity = pixelVelocity + gravity;
             nextStateGrid[y][j].kValue = pixelKValue;
             moved = true;
             break;
@@ -515,10 +489,9 @@ void loop()
           else if ((belowStateA != NULL && belowStateA->state == GRID_STATE_NONE) && (belowNextStateA != NULL && belowNextStateA->state == GRID_STATE_NONE))
           {
             // This pixel will fall to side A (right)
-            // grid[y][j + direction] = pixelColor;
             leds[XY(j + direction, y)] = pixelColor;
-            nextVelocityGrid[y][j + direction] = pixelVelocity + gravity;
             nextStateGrid[y][j + direction].state = GRID_STATE_FALLING;
+            nextStateGrid[y][j + direction].velocity = pixelVelocity + gravity;
             nextStateGrid[y][j + direction].kValue = pixelKValue;
             moved = true;
             break;
@@ -526,10 +499,9 @@ void loop()
           else if ((belowStateB != NULL && belowStateB->state == GRID_STATE_NONE) && (belowNextStateB != NULL && belowNextStateB->state == GRID_STATE_NONE))
           {
             // This pixel will fall to side B (left)
-            // grid[y][j - direction] = pixelColor;
             leds[XY(j - direction, y)] = pixelColor;
-            nextVelocityGrid[y][j - direction] = pixelVelocity + gravity;
             nextStateGrid[y][j - direction].state = GRID_STATE_FALLING;
+            nextStateGrid[y][j - direction].velocity = pixelVelocity + gravity;
             nextStateGrid[y][j - direction].kValue = pixelKValue;
             moved = true;
             break;
@@ -540,7 +512,6 @@ void loop()
       if (moved)
       {
         // Reset color where this pixel was.
-        // setColor(&grid[i][j], 0, 0, 0);
         setColor(&leds[XY(j, i)], 0, 0, 0);
 
         resetAdjacentPixels(j, i);
@@ -548,7 +519,7 @@ void loop()
 
       if (pixelState != GRID_STATE_NONE && !moved)
       {
-        nextVelocityGrid[i][j] = velocityGrid[i][j] + gravity;
+        nextStateGrid[i][j].velocity = pixelVelocity + gravity;
         nextStateGrid[i][j].kValue = pixelKValue;
 
         if (pixelState == GRID_STATE_NEW)
@@ -564,14 +535,9 @@ void loop()
   // unsigned long checkCellTime = afterCheckEveryCell - beforeCheckEveryCell;
   // Serial.printf("%lu pixels checked in %lu ms.\r\n", pixelsChecked, checkCellTime);
 
-  // Swap the state and velocity grid pointers.
+  // Swap the state pointers.
 
-  lastVelocityGrid = velocityGrid;
   lastStateGrid = stateGrid;
-
-  velocityGrid = nextVelocityGrid;
   stateGrid = nextStateGrid;
-
-  nextVelocityGrid = lastVelocityGrid;
   nextStateGrid = lastStateGrid;
 }
