@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <Math.h>
 #include "FastLED.h"
+#include "sin_wave_tech.h"
 
 #define LED_DATA_PIN 10
 
@@ -28,11 +29,14 @@ int16_t millisToChangeInputX = 6000;
 
 int16_t BACKGROUND_COLOR = COLOR_BLACK;
 
-byte red = 31;
-byte green = 0;
-byte blue = 0;
-byte colorState = 0;
-int16_t color = red << 11;
+byte rgbValues[] = {0x31, 0x00, 0x00}; // red, green, blue
+#define COLORS_ARRAY_RED rgbValues[0]
+#define COLORS_ARRAY_GREEN rgbValues[1]
+#define COLORS_ARRAY_BLUE rgbValues[2]
+// byte red = 31;
+// byte green = 0;
+// byte blue = 0;
+uint16_t kValue = 0;
 
 int16_t maxVelocity = 2;
 int16_t gravity = 1;
@@ -134,64 +138,94 @@ bool withinRows(int16_t value)
 }
 
 // Color changing state machine
-void setNextColor()
+void setNextColor(byte *_rgbValues, uint16_t &kValue)
 {
-  switch (colorState)
+  switch (kValue)
   {
   case 0:
-    green += 2;
-    if (green == 64)
+    _rgbValues[1] += 2;
+    if (_rgbValues[1] == 64)
     {
-      green = 63;
-      colorState = 1;
+      _rgbValues[1] = 63;
+      kValue = 1;
     }
     break;
   case 1:
-    red--;
-    if (red == 255)
+    _rgbValues[0]--;
+    if (_rgbValues[0] == 255)
     {
-      red = 0;
-      colorState = 2;
+      _rgbValues[0] = 0;
+      kValue = 2;
     }
     break;
   case 2:
-    blue++;
-    if (blue == 32)
+    _rgbValues[2]++;
+    if (_rgbValues[2] == 32)
     {
-      blue = 31;
-      colorState = 3;
+      _rgbValues[2] = 31;
+      kValue = 3;
     }
     break;
   case 3:
-    green -= 2;
-    if (green == 255)
+    _rgbValues[1] -= 2;
+    if (_rgbValues[1] == 255)
     {
-      green = 0;
-      colorState = 4;
+      _rgbValues[1] = 0;
+      kValue = 4;
     }
     break;
   case 4:
-    red++;
-    if (red == 32)
+    _rgbValues[0]++;
+    if (_rgbValues[0] == 32)
     {
-      red = 31;
-      colorState = 5;
+      _rgbValues[0] = 31;
+      kValue = 5;
     }
     break;
   case 5:
-    blue--;
-    if (blue == 255)
+    _rgbValues[2]--;
+    if (_rgbValues[2] == 255)
     {
-      blue = 0;
-      colorState = 0;
+      _rgbValues[2] = 0;
+      kValue = 0;
     }
     break;
   }
+}
 
-  color = red << 11 | green << 5 | blue;
+static inline uint8_t rotl8(uint8_t n, unsigned int c)
+{
+  const unsigned int mask = (CHAR_BIT * sizeof(n) - 1); // assumes width is a power of 2.
 
-  if (color == BACKGROUND_COLOR)
-    color++;
+  // assert ( (c<=mask) &&"rotate by type width or more");
+  c &= mask;
+  return (n << c) | (n >> ((-c) & mask));
+}
+
+static inline uint8_t rotr8(uint8_t n, unsigned int c)
+{
+  const unsigned int mask = (CHAR_BIT * sizeof(n) - 1);
+
+  // assert ( (c<=mask) &&"rotate by type width or more");
+  c &= mask;
+  return (n >> c) | (n << ((-c) & mask));
+}
+
+void setNextColorAll()
+{
+  for (int16_t i = 0; i < ROWS; ++i)
+  {
+    for (int16_t j = 0; j < COLS; ++j)
+    {
+      if (stateGrid[i][j] != GRID_STATE_NONE)
+      {
+        // //setNextColor((byte *)grid[i][j].raw);
+        // grid[i][j].raw[0] = rotr8(grid[i][j].raw[0], 1);
+        // grid[i][j].raw[1] = rotr8(grid[i][j].raw[1], 1);
+        // grid[i][j].raw[2] = rotr8(grid[i][j].raw[2], 1);
+      }
+    }
+  }
 }
 
 void resetAdjacentPixels(int16_t x, int16_t y)
@@ -343,7 +377,8 @@ void loop()
   if (colorChangeTime < millis())
   {
     colorChangeTime = millis() + millisToChangeColor;
-    setNextColor();
+    setNextColor(rgbValues, kValue);
+    setNextColorAll();
   }
 
   // Change the inputX of the pixels over time or if the current input is already filled.
@@ -375,7 +410,7 @@ void loop()
             (stateGrid[row][col] == GRID_STATE_NONE || stateGrid[row][col] == GRID_STATE_COMPLETE))
         {
           // setColor(&grid[row][col], red, green, blue);
-          setColor(&leds[XY(col, row)], red, green, blue);
+          setColor(&leds[XY(col, row)], COLORS_ARRAY_RED, COLORS_ARRAY_GREEN, COLORS_ARRAY_BLUE);
           velocityGrid[row][col] = 1;
           stateGrid[row][col] = GRID_STATE_NEW;
         }
