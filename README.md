@@ -20,3 +20,11 @@ To choose the configuration you want, you can set one of the following in the [m
 ```
 
 The default is the single 16 x 16 panel.
+
+---
+
+You can see Youtube videos of the code in action here:
+
+| 48x48 (Nine 16x16 panels) configuration | 16x16 configuration |
+| ------------- | ------------- |
+| [![48x48 (Nine 16x16 panels) configuration](https://img.youtube.com/vi/-0NTSk8rc-s/0.jpg)](https://www.youtube.com/watch?v=-0NTSk8rc-s)  | [![16x16](https://img.youtube.com/vi/4l-e632fwiI/0.jpg)](https://www.youtube.com/watch?v=4l-e632fwiI) 
