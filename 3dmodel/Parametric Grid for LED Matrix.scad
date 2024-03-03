@@ -36,7 +36,7 @@ module LEDAreaTemplate(width, depth, zPosition)
   render()
     hull()
     {
-      translate([-width / 2, -width / 2, zPosition])
+      translate([0, 0, zPosition])
         cube([width, width, depth]);
     }
 }
@@ -46,7 +46,7 @@ module SMDGap(width, length, depth, zPosition)
   render()
     hull()
     {
-      translate([-width / 2, -length / 2, zPosition])
+      translate([0, 0, zPosition])
         cube([width, length, depth]);
     }
 }
@@ -54,8 +54,11 @@ module SMDGap(width, length, depth, zPosition)
 module LedMatrix()
 {
   // Center on canvas
-  lastRowLEDOffset = (((LEDsPerRow - 1) * LedAreaWidth) / 2) * -1;
-  lastColumnLEDOffset = (((LEDsPerColumn - 1) * LedAreaWidth) / 2) / -1;
+  lastRowLEDOffset = 0;
+  lastColumnLEDOffset = 0;
+
+  // lastRowLEDOffset = (((LEDsPerRow - 1) * LedAreaWidth) / 2) * -1;
+  // lastColumnLEDOffset = (((LEDsPerColumn - 1) * LedAreaWidth) / 2) / -1;
   
 	difference()
 	{
@@ -67,7 +70,7 @@ module LedMatrix()
 				for (iCol = [0 : (LEDsPerColumn - 1)])
 				{
 					translate([lastColumnLEDOffset + iCol * LedAreaWidth, lastRowLEDOffset + iRow * LedAreaWidth, 0])
-						LEDAreaTemplate(LedAreaWidth + WallWidth - 1, Depth, 0);
+						LEDAreaTemplate(LedAreaWidth, Depth, 0);
 				}
       }
 		}
@@ -80,17 +83,19 @@ module LedMatrix()
 			for (iCol = [0 : (LEDsPerColumn - 1)])
 			{
 				// Segments inside. Position slightly below 0 Z in order to "cut out" the bottom.
-				translate([lastColumnLEDOffset + iCol * LedAreaWidth, lastRowLEDOffset + iRow * LedAreaWidth, 0.01])
+				translate([lastColumnLEDOffset + iCol * LedAreaWidth + (WallWidth / 2), lastRowLEDOffset + iRow * LedAreaWidth + (WallWidth / 2), 0.01])
           LEDAreaTemplate(LedAreaWidth - WallWidth, Depth + 0.1, -0.1);
 			}
     }
 
     if (SlotsForSmd)
     {
+      yTranslateOffset = (((LEDsPerRow - 1) * LedAreaWidth) / 2);
       // Create bar length-wise (for each column) to cut out slot for SMDs
       for (iCol = [0 : (LEDsPerColumn - 1)])
       {
-        translate([(lastColumnLEDOffset + iCol * LedAreaWidth) - SMDSlotShiftOffCenter, 0, 0.01])
+        // translate([((WallWidth * 2) + iCol * LedAreaWidth) - SMDSlotShiftOffCenter, WallWidth, 0.01])
+        translate([(WallWidth / 2) + (iCol * LedAreaWidth + (((LedAreaWidth - WallWidth) / 2) - (SMDSlotWidth / 2))), WallWidth, 0.01])
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
