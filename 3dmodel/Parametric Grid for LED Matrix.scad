@@ -22,7 +22,7 @@ SlotsForSmd = true;
 SMDSlotWidth = 3;
 
 // SMD slot depth in mm
-SMDSlotDepth = 1;
+SMDSlotDepth = 1.2;
 
 // The SMD components on the LED matrix are typically offcenter. This is how much to shift offcenter to match placement, in mm
 SMDSlotShiftOffCenter = 1;
