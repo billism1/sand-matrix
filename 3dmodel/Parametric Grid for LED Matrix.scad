@@ -27,9 +27,9 @@ SMDSlotDepth = 1;
 // The SMD components on the LED matrix are typically offcenter. This is how much to shift offcenter to match placement, in mm
 SMDSlotShiftOffCenter = 1;
 
-GridWidth = ((LEDsPerRow - 1) * LedDistance) + (WallWidth * 2);
+GridLength = ((LEDsPerRow - 1) * LedDistance) + (WallWidth * 2);
 
-GridLength = ((LEDsPerColumn - 1) * LedDistance) + (WallWidth * 2);
+//GridWidth = ((LEDsPerColumn - 1) * LedDistance) + (WallWidth * 2);
 
 module LEDAreaTemplate(width, depth, zPosition)
 {
