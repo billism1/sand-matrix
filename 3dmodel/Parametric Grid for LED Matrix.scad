@@ -13,7 +13,7 @@ LedDistance = 9;
 Depth = 8;
 
 // Wall width in mm
-WallWidth = 1;
+WallWidth = 1.2;
 
 // Whether or not to leave slots on the side of the grid touching the LED matrix, leaving room for the small SMD components
 SlotsForSmd = true;
