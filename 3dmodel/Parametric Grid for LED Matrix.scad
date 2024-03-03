@@ -1,17 +1,16 @@
 // Parameters
 
 // The number of LEDs per row
-LEDsPerRow = 5;
+LEDsPerRow = 16;
 
 // The number of LEDs per column
-LEDsPerColumn = 5;
+LEDsPerColumn = 16;
 
 // The center distance between LEDs in mm (This will also be the LED cube size)
 LedAreaWidth = 9.95;
  
 // Depth in mm
-//Depth = 8;
-Depth = 4;
+Depth = 8;
 
 // Wall width in mm
 WallWidth = 1.2;
