@@ -1,16 +1,17 @@
 // Parameters
 
 // The number of LEDs per row
-LEDsPerRow = 16;
+LEDsPerRow = 5;
 
 // The number of LEDs per column
-LEDsPerColumn = 16;
+LEDsPerColumn = 5;
 
 // The center distance between LEDs in mm (This will also be the LED cube size)
 LedAreaWidth = 9.95;
  
 // Depth in mm
-Depth = 8;
+//Depth = 8;
+Depth = 4;
 
 // Wall width in mm
 WallWidth = 1.2;
@@ -85,7 +86,7 @@ module LedMatrix()
       // Create bar length-wise (for each column) to cut out slot for SMDs
       for (iCol = [0 : (LEDsPerColumn - 1)])
       {
-        translate([(iCol * LedAreaWidth) + (LedAreaWidth / 2) - (SMDSlotWidth / 2), WallWidth, 0.01])
+        translate([(iCol * LedAreaWidth) + (LedAreaWidth / 2) - (SMDSlotWidth / 2) - SMDSlotShiftOffCenter, WallWidth, 0.01])
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
