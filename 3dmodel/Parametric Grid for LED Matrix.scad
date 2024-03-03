@@ -27,7 +27,7 @@ SMDSlotDepth = 1;
 // The SMD components on the LED matrix are typically offcenter. This is how much to shift offcenter to match placement, in mm
 SMDSlotShiftOffCenter = 1;
 
-GridLength = ((LEDsPerRow - 1) * LedAreaWidth) + (WallWidth * 2);
+GridLength = ((LEDsPerColumn - 1) * LedAreaWidth) + (WallWidth * 2);
 
 module LEDAreaTemplate(width, depth, zPosition)
 {
@@ -56,11 +56,11 @@ module LedMatrix()
 		union()
 		{
 			// Exterior area for each LED cube
-			for (iRow = [0 : (LEDsPerRow - 1)])
+			for (iCol = [0 : (LEDsPerColumn - 1)])
       {
-				for (iCol = [0 : (LEDsPerColumn - 1)])
+				for (iRow = [0 : (LEDsPerRow - 1)])
 				{
-					translate([iCol * LedAreaWidth, iRow * LedAreaWidth, 0])
+					translate([iRow * LedAreaWidth, iCol * LedAreaWidth, 0])
 						LEDAreaTemplate(LedAreaWidth, Depth, 0);
 				}
       }
@@ -69,23 +69,23 @@ module LedMatrix()
 		//color( [1, 1, 1, 1] )
 
     // Area to cut out for each LED cube
-		for (iRow = [0 : (LEDsPerRow - 1)])
+		for (iCol = [0 : (LEDsPerColumn - 1)])
     {
-			for (iCol = [0 : (LEDsPerColumn - 1)])
+			for (iRow = [0 : (LEDsPerRow - 1)])
 			{
 				// Segments inside. Position slightly below 0 Z in order to "cut out" the bottom.
-				translate([iCol * LedAreaWidth + (WallWidth / 2), iRow * LedAreaWidth + (WallWidth / 2), 0.01])
+				translate([iRow * LedAreaWidth + (WallWidth / 2), iCol * LedAreaWidth + (WallWidth / 2), 0.01])
           LEDAreaTemplate(LedAreaWidth - WallWidth, Depth + 0.1, -0.1);
 			}
     }
 
     if (SlotsForSmd)
     {
-      yTranslateOffset = (((LEDsPerRow - 1) * LedAreaWidth) / 2);
+      yTranslateOffset = (((LEDsPerColumn - 1) * LedAreaWidth) / 2);
       // Create bar length-wise (for each column) to cut out slot for SMDs
-      for (iCol = [0 : (LEDsPerColumn - 1)])
+      for (iRow = [0 : (LEDsPerRow - 1)])
       {
-        translate([(iCol * LedAreaWidth) + (LedAreaWidth / 2) - (SMDSlotWidth / 2) - SMDSlotShiftOffCenter, WallWidth, 0.01])
+        translate([(iRow * LedAreaWidth) + (LedAreaWidth / 2) - (SMDSlotWidth / 2) - SMDSlotShiftOffCenter, WallWidth, 0.01])
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
