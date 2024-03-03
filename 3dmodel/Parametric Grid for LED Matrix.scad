@@ -90,7 +90,7 @@ module LedMatrix()
       // Create bar length-wise (for each column) to cut out slot for SMDs
       for (iCol = [0 : (LEDsPerColumn - 1)])
       {
-        translate([(lastColumnLEDOffset + iCol * LedDistance) + SMDSlotShiftOffCenter, 0, 0.01])
+        translate([(lastColumnLEDOffset + iCol * LedDistance) - SMDSlotShiftOffCenter, 0, 0.01])
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
