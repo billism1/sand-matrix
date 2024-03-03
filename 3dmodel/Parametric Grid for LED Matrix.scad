@@ -36,7 +36,7 @@ module LEDAreaTemplate(width, depth, zPosition)
   render()
     hull()
     {
-      translate([-width/2, -width/2, zPosition])
+      translate([-width / 2, -width / 2, zPosition])
         cube([width, width, depth]);
     }
 }
@@ -46,7 +46,7 @@ module SMDGap(width, length, depth, zPosition)
   render()
     hull()
     {
-      translate([-width/2, -length/2, zPosition])
+      translate([-width / 2, -length / 2, zPosition])
         cube([width, length, depth]);
     }
 }
@@ -62,9 +62,9 @@ module LedMatrix()
 		union()
 		{
 			// Exterior area for each LED cube
-			for ( iRow = [0 : (LEDsPerRow - 1)] )
+			for (iRow = [0 : (LEDsPerRow - 1)])
       {
-				for ( iCol = [0 : (LEDsPerColumn - 1)] )
+				for (iCol = [0 : (LEDsPerColumn - 1)])
 				{
 					translate([lastColumnLEDOffset + iCol * LedDistance, lastRowLEDOffset + iRow * LedDistance, 0])
 						LEDAreaTemplate(LedDistance + WallWidth - 1, Depth, 0);
