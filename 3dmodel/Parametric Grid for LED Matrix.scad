@@ -7,8 +7,8 @@ LEDsPerRow = 16;
 LEDsPerColumn = 16;
 
 // The center distance between LEDs in mm (This will also be the LED cube size)
-LedDistance = 9;
-
+LedAreaWidth = 9.95;
+ 
 // Depth in mm
 Depth = 8;
 
@@ -27,9 +27,9 @@ SMDSlotDepth = 1;
 // The SMD components on the LED matrix are typically offcenter. This is how much to shift offcenter to match placement, in mm
 SMDSlotShiftOffCenter = 1;
 
-GridLength = ((LEDsPerRow - 1) * LedDistance) + (WallWidth * 2);
+GridLength = ((LEDsPerRow - 1) * LedAreaWidth) + (WallWidth * 2);
 
-//GridWidth = ((LEDsPerColumn - 1) * LedDistance) + (WallWidth * 2);
+//GridWidth = ((LEDsPerColumn - 1) * LedAreaWidth) + (WallWidth * 2);
 
 module LEDAreaTemplate(width, depth, zPosition)
 {
@@ -54,8 +54,8 @@ module SMDGap(width, length, depth, zPosition)
 module LedMatrix()
 {
   // Center on canvas
-  lastRowLEDOffset = (((LEDsPerRow - 1) * LedDistance) / 2) * -1;
-  lastColumnLEDOffset = (((LEDsPerColumn - 1) * LedDistance) / 2) / -1;
+  lastRowLEDOffset = (((LEDsPerRow - 1) * LedAreaWidth) / 2) * -1;
+  lastColumnLEDOffset = (((LEDsPerColumn - 1) * LedAreaWidth) / 2) / -1;
   
 	difference()
 	{
@@ -66,8 +66,8 @@ module LedMatrix()
       {
 				for (iCol = [0 : (LEDsPerColumn - 1)])
 				{
-					translate([lastColumnLEDOffset + iCol * LedDistance, lastRowLEDOffset + iRow * LedDistance, 0])
-						LEDAreaTemplate(LedDistance + WallWidth - 1, Depth, 0);
+					translate([lastColumnLEDOffset + iCol * LedAreaWidth, lastRowLEDOffset + iRow * LedAreaWidth, 0])
+						LEDAreaTemplate(LedAreaWidth + WallWidth - 1, Depth, 0);
 				}
       }
 		}
@@ -80,8 +80,8 @@ module LedMatrix()
 			for (iCol = [0 : (LEDsPerColumn - 1)])
 			{
 				// Segments inside. Position slightly below 0 Z in order to "cut out" the bottom.
-				translate([lastColumnLEDOffset + iCol * LedDistance, lastRowLEDOffset + iRow * LedDistance, 0.01])
-          LEDAreaTemplate(LedDistance - WallWidth, Depth + 0.1, -0.1);
+				translate([lastColumnLEDOffset + iCol * LedAreaWidth, lastRowLEDOffset + iRow * LedAreaWidth, 0.01])
+          LEDAreaTemplate(LedAreaWidth - WallWidth, Depth + 0.1, -0.1);
 			}
     }
 
@@ -90,7 +90,7 @@ module LedMatrix()
       // Create bar length-wise (for each column) to cut out slot for SMDs
       for (iCol = [0 : (LEDsPerColumn - 1)])
       {
-        translate([(lastColumnLEDOffset + iCol * LedDistance) - SMDSlotShiftOffCenter, 0, 0.01])
+        translate([(lastColumnLEDOffset + iCol * LedAreaWidth) - SMDSlotShiftOffCenter, 0, 0.01])
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
