@@ -19,7 +19,7 @@ WallWidth = 1.2;
 SlotsForSmd = true;
 
 // SMD slot with in mm
-SMDSlotWidth = 3;
+SMDSlotWidth = 3.75;
 
 // SMD slot depth in mm
 SMDSlotDepth = 1.2;
