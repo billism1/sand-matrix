@@ -1,3 +1,8 @@
+// License: MIT
+//
+// This is for generating grid support for Neopixel matrices (ws8212b LED panels).
+// The support can be 3d printed and used to hold a diffuser in front of the LED panel.
+
 // Parameters
 
 // The number of LEDs per row
@@ -81,7 +86,6 @@ module LedMatrix()
 
     if (SlotsForSmd)
     {
-      yTranslateOffset = (((LEDsPerColumn - 1) * LedAreaWidth) / 2);
       // Create bar length-wise (for each column) to cut out slot for SMDs
       for (iRow = [0 : (LEDsPerRow - 1)])
       {
