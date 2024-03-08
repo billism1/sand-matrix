@@ -33,10 +33,10 @@ const bool perPanelIsVertical = false;
 //////////////////////////////////////////
 // Display size parameters:
 
-#define ARRAY_SIZE_16x16
-// #define ARRAY_SIZE_48x48
+#define LED_PANELS_1
+// #define LED_PANELS_9_16x16
 
-#ifdef ARRAY_SIZE_16x16
+#ifdef LED_PANELS_1
 static const uint16_t ROWS = 16;
 static const uint16_t COLS = 16;
 static const uint16_t LEDS_PER_PIN = (ROWS * COLS);
@@ -44,7 +44,7 @@ static const uint16_t LEDS_PER_PIN = (ROWS * COLS);
 // Params for width and height when translating X/Y values to LED pointer.
 const uint16_t perPanelWidth = COLS;
 const uint16_t perPanelHeight = ROWS;
-#elif defined(ARRAY_SIZE_48x48)
+#elif defined(LED_PANELS_9_16x16)
 // 3 vertical 16x16 panels, making 1 contiguous 16x48 panels each.
 static const uint16_t ROWS = 48;
 static const uint16_t COLS = 48;
@@ -172,9 +172,9 @@ uint16_t getPanelXYOffset(uint16_t x, uint16_t y)
 // If needed, the conversion to get the correct led array address will be done.
 CRGB *getCrgb(uint16_t xCol, uint16_t yRow)
 {
-#ifdef ARRAY_SIZE_16x16
+#ifdef LED_PANELS_1
   return &leds[getPanelXYOffset(xCol, yRow)];
-#elif defined(ARRAY_SIZE_48x48)
+#elif defined(LED_PANELS_9_16x16)
 
   uint16_t ledOffset = 0;
   uint16_t newXCol = xCol;
@@ -333,14 +333,14 @@ void resetGrid()
   }
 }
 
-void setupFastLED_16x16()
+void setupFastLED_1_Panel()
 {
   leds = new CRGB[NUM_LEDS];
 
   FastLED.addLeds<NEOPIXEL, LED_DATA_PIN_PANEL_1>(leds, NUM_LEDS);
 }
 
-void setupFastLED_3x_16x16_vertical()
+void setupFastLED_3_Panels_16x48()
 {
   leds = new CRGB[NUM_LEDS];
 
@@ -369,10 +369,10 @@ void setup()
   }
 
   // Serial.println("Init FastLED....");
-#ifdef ARRAY_SIZE_16x16
-  setupFastLED_16x16();
-#elif defined(ARRAY_SIZE_48x48)
-  setupFastLED_3x_16x16_vertical();
+#ifdef LED_PANELS_1
+  setupFastLED_1_Panel();
+#elif defined(LED_PANELS_9_16x16)
+  setupFastLED_3_Panels_16x48();
 #endif
 
   // Initial values
@@ -416,7 +416,7 @@ void loop()
   if (inputXChangeTime < millis() || stateGrid[inputY][inputX].state != GRID_STATE_NONE)
   {
     inputXChangeTime = millis() + millisToChangeInputX;
-    inputX = random(0, COLS - 1);
+    inputX = random(0, COLS);
   }
 
   // Randomly add an area of pixels
