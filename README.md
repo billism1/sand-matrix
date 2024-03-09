@@ -15,11 +15,11 @@ For the LED panels, there are 2 configurations supported.
 
 To choose the configuration you want, you can set one of the following in the [main.cpp](src/main.cpp) file:
 ```
-// #define LED_PANELS_1
-#define LED_PANELS_9_16x16
+#define LED_PANELS_1
+// #define LED_PANELS_9_16x16
 ```
 
-The default is the single 16 x 16 panel.
+The default is LED_PANELS_1 which is the configuration for a single 16 x 16 panel.
 
 ---
 
