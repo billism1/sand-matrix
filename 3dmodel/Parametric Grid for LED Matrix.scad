@@ -28,12 +28,12 @@ LEDsPerRow = 16;
 LEDsPerColumn = 16;
 
 // The center horizontal distance between LEDs in mm. This will also be the LED cube size.
-LedAreaWidth = 9.95;   // Used for flexible Neopixel type matrix: 16x16, 8x8, 8x32, etc.
-//LedAreaWidth = 8.15;   // Used for a hard 8x8 PCB I ordered from AliExpress. This component is not a perfect square, unfortunately.
+LEDAreaWidth = 9.95;   // Used for flexible Neopixel type matrix: 16x16, 8x8, 8x32, etc.
+//LEDAreaWidth = 8.15;   // Used for a hard 8x8 PCB I ordered from AliExpress. This component is not a perfect square, unfortunately.
 
 // The center "vertical" distance between LEDs in mm. This will also be the LED cube size.
-LedAreaLength = 9.95;   // Used for flexible Neopixel type matrix: 16x16, 8x8, 8x32, etc.
-//LedAreaLength = 8.333;  // Used for a hard 8x8 PCB I ordered from AliExpress. This component is not a perfect square, unfortunately.
+LEDAreaLength = 9.95;   // Used for flexible Neopixel type matrix: 16x16, 8x8, 8x32, etc.
+//LEDAreaLength = 8.333;  // Used for a hard 8x8 PCB I ordered from AliExpress. This component is not a perfect square, unfortunately.
 
 // Depth in mm.
 Depth = 8;
@@ -42,15 +42,15 @@ Depth = 8;
 WallWidth = 1.2;
 
 // Whether or not to leave slots on the side of the grid touching the LED matrix, leaving room for the small SMD components.
-SlotsForSmd = true;
+SlotsForSMD = true;
 
-// SMD slot with in mm.
+// SMD slot width in mm.
 SMDSlotWidth = 3.75;
 
 // SMD slot depth in mm.
 SMDSlotDepth = 1.2;
 
-// The SMD components on the LED matrix are typically offcenter. This is how much to shift offcenter to match placement, in mm
+// The SMD components on the LED matrix are typically offcenter. This is how much to shift offcenter to match placement, in mm.
 SMDSlotShiftOffCenter = 1;   // Used for flexible Neopixel type matrix: 16x16, 8x8, 8x32, etc. the SMD capacitors are off-center under each pixel.
 //SMDSlotShiftOffCenter = 0;   // Used for a hard 8x8 PCB I ordered from AliExpress - the SMD capacitors are centered under each pixel on this component.
 
@@ -61,8 +61,8 @@ IncludeDiffuser = false;
 // If including a diffuser layer, this is how thick it will be in mm.
 DiffuserThickness = 0.6;
 
-GridWidth = ((LEDsPerColumn - 1) * LedAreaWidth) + (WallWidth * 2);
-GridLength = ((LEDsPerRow - 1) * LedAreaLength) + (WallWidth * 2);
+GridWidth = ((LEDsPerColumn - 1) * LEDAreaWidth) + (WallWidth * 2);
+GridLength = ((LEDsPerRow - 1) * LEDAreaLength) + (WallWidth * 2);
 
 module LEDAreaTemplate(width, length, depth, zPosition)
 {
@@ -84,7 +84,7 @@ module SMDGap(width, length, depth, zPosition)
     }
 }
 
-module LedMatrix()
+module LEDMatrix()
 {
   difference()
   {
@@ -95,8 +95,8 @@ module LedMatrix()
       {
         for (iRow = [0 : (LEDsPerRow - 1)])
         {
-          translate([iRow * LedAreaWidth, iCol * LedAreaLength, 0])
-            LEDAreaTemplate(LedAreaWidth, LedAreaLength, Depth, 0);
+          translate([iRow * LEDAreaWidth, iCol * LEDAreaLength, 0])
+            LEDAreaTemplate(LEDAreaWidth, LEDAreaLength, Depth, 0);
         }
       }
     }
@@ -109,21 +109,21 @@ module LedMatrix()
       for (iRow = [0 : (LEDsPerRow - 1)])
       {
         // Segments inside. Position slightly below 0 Z in order to "cut out" the bottom.
-        translate([iRow * LedAreaWidth + (WallWidth / 2), iCol * LedAreaLength + (WallWidth / 2), 0.01])
-          LEDAreaTemplate(LedAreaWidth - WallWidth, LedAreaLength - WallWidth, Depth + 0.1, (IncludeDiffuser ? DiffuserThickness : -0.1));
+        translate([iRow * LEDAreaWidth + (WallWidth / 2), iCol * LEDAreaLength + (WallWidth / 2), 0.01])
+          LEDAreaTemplate(LEDAreaWidth - WallWidth, LEDAreaLength - WallWidth, Depth + 0.1, (IncludeDiffuser ? DiffuserThickness : -0.1));
       }
     }
 
-    if (SlotsForSmd)
+    if (SlotsForSMD)
     {
       // Create bar length-wise (for each column) to cut out slot for SMDs
       for (iRow = [0 : (LEDsPerRow - 1)])
       {
-        translate([(iRow * LedAreaWidth) + (LedAreaWidth / 2) - (SMDSlotWidth / 2) - SMDSlotShiftOffCenter, WallWidth, 0.01])
+        translate([(iRow * LEDAreaWidth) + (LEDAreaWidth / 2) - (SMDSlotWidth / 2) - SMDSlotShiftOffCenter, WallWidth, 0.01])
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
   }
 }
 
-LedMatrix();
+LEDMatrix();
