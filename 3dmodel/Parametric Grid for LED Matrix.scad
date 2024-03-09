@@ -86,32 +86,32 @@ module SMDGap(width, length, depth, zPosition)
 
 module LedMatrix()
 {
-	difference()
-	{
-		union()
-		{
-			// Exterior area for each LED cube
-			for (iCol = [0 : (LEDsPerColumn - 1)])
+  difference()
+  {
+    union()
+    {
+      // Exterior area for each LED cube
+      for (iCol = [0 : (LEDsPerColumn - 1)])
       {
-				for (iRow = [0 : (LEDsPerRow - 1)])
-				{
-					translate([iRow * LedAreaWidth, iCol * LedAreaLength, 0])
-						LEDAreaTemplate(LedAreaWidth, LedAreaLength, Depth, 0);
-				}
+        for (iRow = [0 : (LEDsPerRow - 1)])
+        {
+          translate([iRow * LedAreaWidth, iCol * LedAreaLength, 0])
+            LEDAreaTemplate(LedAreaWidth, LedAreaLength, Depth, 0);
+        }
       }
-		}
-	
-		//color( [1, 1, 1, 1] )
+    }
+  
+    //color( [1, 1, 1, 1] )
 
     // Area to cut out for each LED cube
-		for (iCol = [0 : (LEDsPerColumn - 1)])
+    for (iCol = [0 : (LEDsPerColumn - 1)])
     {
-			for (iRow = [0 : (LEDsPerRow - 1)])
-			{
-				// Segments inside. Position slightly below 0 Z in order to "cut out" the bottom.
-				translate([iRow * LedAreaWidth + (WallWidth / 2), iCol * LedAreaLength + (WallWidth / 2), 0.01])
+      for (iRow = [0 : (LEDsPerRow - 1)])
+      {
+        // Segments inside. Position slightly below 0 Z in order to "cut out" the bottom.
+        translate([iRow * LedAreaWidth + (WallWidth / 2), iCol * LedAreaLength + (WallWidth / 2), 0.01])
           LEDAreaTemplate(LedAreaWidth - WallWidth, LedAreaLength - WallWidth, Depth + 0.1, (IncludeDiffuser ? DiffuserThickness : -0.1));
-			}
+      }
     }
 
     if (SlotsForSmd)
@@ -123,7 +123,7 @@ module LedMatrix()
           SMDGap(SMDSlotWidth, GridLength, SMDSlotDepth, Depth - SMDSlotDepth);
       }
     }
-	}
+  }
 }
 
 LedMatrix();
