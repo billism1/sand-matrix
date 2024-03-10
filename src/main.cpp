@@ -2,6 +2,14 @@
 #include <Math.h>
 #include "FastLED.h"
 #include "colorChangeRoutine.h"
+#include "wii_i2c.h"
+
+// pins connected to the Nunchuk:
+#define PIN_SDA 10
+#define PIN_SCL 11
+
+// ESP32 I2C port (0 or 1):
+#define WII_I2C_PORT 0
 
 //////////////////////////////////////////
 // Parameters you can play with:
@@ -79,6 +87,7 @@ struct GridState
 #endif
 
 #define COLOR_BLACK 0
+#define COLOR_MAGENTA 0xFF00FF
 
 CRGB *leds;
 
@@ -351,9 +360,16 @@ void setupFastLED_3_Panels_16x48()
 
 void setup()
 {
-  Serial.begin(115200);
+  //Serial.begin(115200);
   Serial.println("Hello, starting...");
   Serial.printf("Pins used for LED strip output: %d, %d, %d\n", LED_DATA_PIN_PANEL_1, LED_DATA_PIN_PANEL_2, LED_DATA_PIN_PANEL_3);
+
+  if (wii_i2c_init(WII_I2C_PORT, PIN_SDA, PIN_SCL) != 0)
+  {
+    Serial.printf("Error initializing nunchuk :(");
+    return;
+  }
+  wii_i2c_request_state();
 
   // Init 2-d arrays, holding pixel state
   // Serial.println("Init other 2-d arrays, holding pixel state....");
@@ -412,38 +428,80 @@ void loop()
   lastMillis = currentMillis;
   // Serial.println("Looping within FPS limit...");
 
-  // Change the inputX of the pixels over time or if the current input is already filled.
-  if (inputXChangeTime < millis() || stateGrid[inputY][inputX].state != GRID_STATE_NONE)
+  bool shouldInput = false;
+
+
+  const unsigned char *data = wii_i2c_read_state();
+  wii_i2c_request_state();
+  if (!data)
   {
-    inputXChangeTime = millis() + millisToChangeInputX;
-    inputX = random(0, COLS);
+    // Serial.printf("no nunchuck data available :(");
+    // Change the inputX of the pixels over time or if the current input is already filled.
+    if (inputXChangeTime < millis() || stateGrid[inputY][inputX].state != GRID_STATE_NONE)
+    {
+      inputXChangeTime = millis() + millisToChangeInputX;
+      inputX = random(0, COLS);
+    }
+
+    inputY = 0;
+    shouldInput = true;
+  }
+  else
+  {
+    wii_i2c_nunchuk_state state;
+    wii_i2c_decode_nunchuk(data, &state);
+    // Serial.printf("Stick position: (%d,%d)\n", state.x, state.y);
+    // Serial.printf("C button is %s\n", (state.c) ? "pressed" : "not pressed");
+    // Serial.printf("Z button is %s\n", (state.z) ? "pressed" : "not pressed");
+
+    // reset old input point
+    setColor(getCrgb(inputX, inputY), 0x00, 0x00, 0x00);
+
+    inputX = map(state.x, 99, -99, 0, COLS - 1);
+    inputY = map(state.y, 99, -99, 0, ROWS - 1);
+    shouldInput = state.c || state.z;
+
+    // if (state.y > 1)
+    // {
+    //   percentInputFill = min(percentInputFill + 1, 100);
+    // }
+    // else if (state.y < -1)
+    // {
+    //   percentInputFill = max(percentInputFill - 1, 0);
+    // }
   }
 
-  // Randomly add an area of pixels
-  int16_t halfInputWidth = inputWidth / 2;
-  for (int16_t i = -halfInputWidth; i <= halfInputWidth; ++i)
+  auto inputLedNumber = getPanelXYOffset(inputX, inputY);
+  leds[inputLedNumber] = CHSV(255, 10, 10);
+
+  if (shouldInput)
   {
-    for (int16_t j = -halfInputWidth; j <= halfInputWidth; ++j)
+    // Randomly add an area of pixels
+    int16_t halfInputWidth = inputWidth / 2;
+    for (int16_t i = -halfInputWidth; i <= halfInputWidth; ++i)
     {
-      if (random(100) < percentInputFill)
+      for (int16_t j = -halfInputWidth; j <= halfInputWidth; ++j)
       {
-        dropCount++;
-        if (dropCount > (inputWidth * ROWS * COLS))
+        if (random(100) < percentInputFill)
         {
-          dropCount = 0;
-          resetGrid();
-        }
+          dropCount++;
+          if (dropCount > (inputWidth * ROWS * COLS))
+          {
+            dropCount = 0;
+            resetGrid();
+          }
 
-        int16_t col = inputX + i;
-        int16_t row = inputY + j;
+          int16_t col = inputX + i;
+          int16_t row = inputY + j;
 
-        if (withinCols(col) && withinRows(row) &&
-            (stateGrid[row][col].state == GRID_STATE_NONE || stateGrid[row][col].state == GRID_STATE_COMPLETE))
-        {
-          setColor(getCrgb(col, row), COLORS_ARRAY_RED, COLORS_ARRAY_GREEN, COLORS_ARRAY_BLUE);
-          stateGrid[row][col].state = GRID_STATE_NEW;
-          stateGrid[row][col].velocity = 1;
-          stateGrid[row][col].kValue = newKValue;
+          if (withinCols(col) && withinRows(row) &&
+              (stateGrid[row][col].state == GRID_STATE_NONE || stateGrid[row][col].state == GRID_STATE_COMPLETE))
+          {
+            setColor(getCrgb(col, row), COLORS_ARRAY_RED, COLORS_ARRAY_GREEN, COLORS_ARRAY_BLUE);
+            stateGrid[row][col].state = GRID_STATE_NEW;
+            stateGrid[row][col].velocity = 1;
+            stateGrid[row][col].kValue = newKValue;
+          }
         }
       }
     }
